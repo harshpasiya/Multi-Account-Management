@@ -103,9 +103,8 @@ export function PositionsView({
           </SelectContent>
         </Select>
         <ToggleGroup
-          type="single"
-          value={groupBy}
-          onValueChange={(v) => v && setGroupBy(v as "none" | "symbol")}
+          value={[groupBy]}
+          onValueChange={(v) => v[0] && setGroupBy(v[0] as "none" | "symbol")}
           variant="outline"
           className="sm:ml-auto"
         >
