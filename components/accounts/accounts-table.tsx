@@ -67,7 +67,7 @@ export function AccountsTable({
             onChange={(e) => setQuery(e.target.value)}
           />
         </InputGroup>
-        <Select value={status} onValueChange={setStatus}>
+        <Select value={status} onValueChange={(value) => setStatus(value ?? "all")}>
           <SelectTrigger className="sm:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>

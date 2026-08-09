@@ -87,7 +87,7 @@ export function PositionsView({
             onChange={(e) => setQuery(e.target.value)}
           />
         </InputGroup>
-        <Select value={account} onValueChange={setAccount}>
+        <Select value={account} onValueChange={(value) => setAccount(value ?? "all")}>
           <SelectTrigger className="sm:w-48">
             <SelectValue placeholder="Account" />
           </SelectTrigger>
