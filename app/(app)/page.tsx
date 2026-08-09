@@ -45,15 +45,14 @@ export default function DashboardPage() {
           </CardContent>
           <CardContent className="pt-0">
             <Button
-              asChild
+              render={<Link href="/trades" />}
+              nativeButton={false}
               variant="outline"
               size="sm"
               className="w-full"
             >
-              <Link href="/trades">
-                View all trades
-                <ArrowRight data-icon="inline-end" />
-              </Link>
+              View all trades
+              <ArrowRight data-icon="inline-end" />
             </Button>
           </CardContent>
         </Card>

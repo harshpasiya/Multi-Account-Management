@@ -93,20 +93,19 @@ export function Topbar({
       <div className="ml-auto flex items-center gap-2">
         {pendingAuth > 0 && (
           <Button
-            asChild
+            render={<Link href="/session" />}
+            nativeButton={false}
             variant="outline"
             size="sm"
             className="border-loss/30 bg-loss/5 text-loss hover:bg-loss/10 hover:text-loss"
           >
-            <Link href="/session">
-              <ShieldCheck />
-              <span className="hidden sm:inline">
-                {pendingAuth} to authenticate
-              </span>
-              <Badge className="bg-loss text-loss-foreground sm:hidden">
-                {pendingAuth}
-              </Badge>
-            </Link>
+            <ShieldCheck />
+            <span className="hidden sm:inline">
+              {pendingAuth} to authenticate
+            </span>
+            <Badge className="bg-loss text-loss-foreground sm:hidden">
+              {pendingAuth}
+            </Badge>
           </Button>
         )}
         <LivePnlBadge base={aggregatePnl} />

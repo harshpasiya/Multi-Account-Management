@@ -71,14 +71,12 @@ export function AppSidebar({ pendingAuth }: { pendingAuth: number }) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
+                  render={<Link href="/session" />}
                   isActive={isActive("/session")}
                   tooltip="Authenticate client sessions"
                 >
-                  <Link href="/session">
-                    <ShieldCheck />
-                    <span>Daily Auth</span>
-                  </Link>
+                  <ShieldCheck />
+                  <span>Daily Auth</span>
                 </SidebarMenuButton>
                 {pendingAuth > 0 && (
                   <SidebarMenuBadge className="bg-loss/15 text-loss">
@@ -97,14 +95,12 @@ export function AppSidebar({ pendingAuth }: { pendingAuth: number }) {
               {tradingNav.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
-                    asChild
+                    render={<Link href={item.href} />}
                     isActive={isActive(item.href)}
                     tooltip={item.title}
                   >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
+                    <item.icon />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -119,14 +115,12 @@ export function AppSidebar({ pendingAuth }: { pendingAuth: number }) {
               {clientNav.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
-                    asChild
+                    render={<Link href={item.href} />}
                     isActive={isActive(item.href)}
                     tooltip={item.title}
                   >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
+                    <item.icon />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -139,14 +133,12 @@ export function AppSidebar({ pendingAuth }: { pendingAuth: number }) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
+                  render={<Link href="/settings" />}
                   isActive={isActive("/settings")}
                   tooltip="Settings"
                 >
-                  <Link href="/settings">
-                    <Settings />
-                    <span>Settings</span>
-                  </Link>
+                  <Settings />
+                  <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

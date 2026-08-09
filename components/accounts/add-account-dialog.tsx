@@ -58,12 +58,14 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus data-icon="inline-start" />
-          Add account
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button>
+            <Plus data-icon="inline-start" />
+            Add account
+          </Button>
+        }
+      />
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add client account</DialogTitle>
@@ -160,9 +162,7 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
+          <DialogClose render={<Button variant="outline">Cancel</Button>} />
           <Button type="submit" form="add-account-form">
             Create account
           </Button>
