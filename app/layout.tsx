@@ -39,6 +39,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          {/* Base UI's TooltipProvider takes `delay`, not Radix's `delayDuration` — this codebase wraps @base-ui/react/tooltip, not Radix. */}
           <TooltipProvider delay={200}>{children}</TooltipProvider>
           <Toaster position="top-right" />
         </ThemeProvider>
