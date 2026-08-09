@@ -141,7 +141,7 @@ export function OrderTicket({
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="symbol">Instrument</Label>
-            <Select value={symbol} onValueChange={setSymbol}>
+            <Select value={symbol} onValueChange={(value) => setSymbol(value ?? symbol)}>
               <SelectTrigger id="symbol">
                 <SelectValue />
               </SelectTrigger>
@@ -173,7 +173,7 @@ export function OrderTicket({
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="product">Product</Label>
-              <Select value={product} onValueChange={setProduct}>
+              <Select value={product} onValueChange={(value) => setProduct(value ?? product)}>
                 <SelectTrigger id="product">
                   <SelectValue />
                 </SelectTrigger>
@@ -191,7 +191,7 @@ export function OrderTicket({
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="ordertype">Order type</Label>
-              <Select value={orderType} onValueChange={setOrderType}>
+              <Select value={orderType} onValueChange={(value) => setOrderType(value ?? orderType)}>
                 <SelectTrigger id="ordertype">
                   <SelectValue />
                 </SelectTrigger>
