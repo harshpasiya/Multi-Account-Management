@@ -11,7 +11,6 @@ import {
   Receipt,
   Settings,
   ShieldCheck,
-  CandlestickChart,
 } from "lucide-react";
 import {
   Sidebar,
@@ -50,9 +49,6 @@ export function AppSidebar({ pendingAuth }: { pendingAuth: number }) {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 px-1 py-1.5">
-          <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <CandlestickChart className="size-4.5" />
-          </div>
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-semibold tracking-tight">
               Kite Manager
