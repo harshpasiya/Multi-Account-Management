@@ -130,11 +130,6 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
                 <Input id="api_secret" name="api_secret" type="password" aria-invalid={Boolean(errorFor("apiSecret"))} required />
                 {errorFor("apiSecret") ? <FieldError>{errorFor("apiSecret")}</FieldError> : null}
               </Field>
-              <Field data-invalid={Boolean(errorFor("zerodhaUserId"))}>
-                <FieldLabel htmlFor="zerodha_user_id">Zerodha user ID</FieldLabel>
-                <Input id="zerodha_user_id" name="zerodha_user_id" aria-invalid={Boolean(errorFor("zerodhaUserId"))} required />
-                {errorFor("zerodhaUserId") ? <FieldError>{errorFor("zerodhaUserId")}</FieldError> : null}
-              </Field>
               <Field data-invalid={Boolean(errorFor("zerodhaPassword"))}>
                 <FieldLabel htmlFor="zerodha_password">Zerodha password</FieldLabel>
                 <Input id="zerodha_password" name="zerodha_password" type="password" aria-invalid={Boolean(errorFor("zerodhaPassword"))} required />

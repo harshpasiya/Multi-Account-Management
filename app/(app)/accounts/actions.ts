@@ -7,7 +7,7 @@ import { encryptKiteCredential } from "@/lib/kite-crypto"
 type AccountActionState = {
   status: "idle" | "success" | "error"
   message?: string
-  field?: "name" | "zerodhaClientId" | "capitalContributed" | "profitSharePercent" | "apiKey" | "apiSecret" | "zerodhaUserId" | "zerodhaPassword" | "form"
+  field?: "name" | "zerodhaClientId" | "capitalContributed" | "profitSharePercent" | "apiKey" | "apiSecret" | "zerodhaPassword" | "form"
 }
 
 export async function createAccountAction(
@@ -25,7 +25,6 @@ export async function createAccountAction(
   const notes = String(formData.get("notes") ?? "").trim()
   const apiKey = String(formData.get("api_key") ?? "").trim()
   const apiSecret = String(formData.get("api_secret") ?? "")
-  const zerodhaUserId = String(formData.get("zerodha_user_id") ?? "").trim()
   const zerodhaPassword = String(formData.get("zerodha_password") ?? "")
   const capitalContributed = Number(capitalRaw)
   const profitSharePercent = Number(shareRaw)
@@ -36,7 +35,6 @@ export async function createAccountAction(
   }
   if (!apiKey) return { status: "error", field: "apiKey", message: "Kite API key is required." }
   if (!apiSecret) return { status: "error", field: "apiSecret", message: "Kite API secret is required." }
-  if (!zerodhaUserId) return { status: "error", field: "zerodhaUserId", message: "Zerodha user ID is required." }
   if (!zerodhaPassword) return { status: "error", field: "zerodhaPassword", message: "Zerodha password is required." }
   if (!Number.isFinite(capitalContributed) || capitalContributed < 0) {
     return { status: "error", field: "capitalContributed", message: "Capital must be zero or greater." }
@@ -61,7 +59,7 @@ export async function createAccountAction(
       notes,
       apiKey,
       apiSecretEncrypted: encryptKiteCredential(apiSecret),
-      zerodhaUserId,
+      zerodhaUserId: zerodhaClientId,
       zerodhaPasswordEncrypted: encryptKiteCredential(zerodhaPassword),
     })
     revalidatePath("/accounts")
