@@ -77,7 +77,7 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
         <DialogHeader>
           <DialogTitle>Add client account</DialogTitle>
           <DialogDescription>
-            Register a new managed Zerodha account. Kite API keys are connected separately in Settings.
+            Register a new managed Zerodha account with its Kite Connect credentials.
           </DialogDescription>
         </DialogHeader>
         <form ref={formRef} action={formAction} id="add-account-form">
@@ -113,6 +113,32 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
                 <FieldLabel htmlFor="profitSharePercent">Profit share (%)</FieldLabel>
                 <Input id="profitSharePercent" name="profitSharePercent" type="number" min={0} max={100} step="0.01" defaultValue={defaultShare} aria-invalid={Boolean(errorFor("profitSharePercent"))} required />
                 {errorFor("profitSharePercent") ? <FieldError>{errorFor("profitSharePercent")}</FieldError> : null}
+              </Field>
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-sm font-semibold">Zerodha / Kite Connect credentials</p>
+              <p className="mt-1 text-sm text-muted-foreground">Required to authenticate and trade this client account. Access tokens are created during daily login.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field data-invalid={Boolean(errorFor("apiKey"))}>
+                <FieldLabel htmlFor="api_key">API key</FieldLabel>
+                <Input id="api_key" name="api_key" aria-invalid={Boolean(errorFor("apiKey"))} required />
+                {errorFor("apiKey") ? <FieldError>{errorFor("apiKey")}</FieldError> : null}
+              </Field>
+              <Field data-invalid={Boolean(errorFor("apiSecret"))}>
+                <FieldLabel htmlFor="api_secret">API secret</FieldLabel>
+                <Input id="api_secret" name="api_secret" type="password" aria-invalid={Boolean(errorFor("apiSecret"))} required />
+                {errorFor("apiSecret") ? <FieldError>{errorFor("apiSecret")}</FieldError> : null}
+              </Field>
+              <Field data-invalid={Boolean(errorFor("zerodhaUserId"))}>
+                <FieldLabel htmlFor="zerodha_user_id">Zerodha user ID</FieldLabel>
+                <Input id="zerodha_user_id" name="zerodha_user_id" aria-invalid={Boolean(errorFor("zerodhaUserId"))} required />
+                {errorFor("zerodhaUserId") ? <FieldError>{errorFor("zerodhaUserId")}</FieldError> : null}
+              </Field>
+              <Field data-invalid={Boolean(errorFor("zerodhaPassword"))}>
+                <FieldLabel htmlFor="zerodha_password">Zerodha password</FieldLabel>
+                <Input id="zerodha_password" name="zerodha_password" type="password" aria-invalid={Boolean(errorFor("zerodhaPassword"))} required />
+                {errorFor("zerodhaPassword") ? <FieldError>{errorFor("zerodhaPassword")}</FieldError> : null}
               </Field>
             </div>
             <Field>

@@ -1,12 +1,13 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createAccount } from "@/lib/supabase/data"
+import { createAccountWithCredentials } from "@/lib/supabase/data"
+import { encryptKiteCredential } from "@/lib/kite-crypto"
 
 type AccountActionState = {
   status: "idle" | "success" | "error"
   message?: string
-  field?: "name" | "zerodhaClientId" | "capitalContributed" | "profitSharePercent" | "form"
+  field?: "name" | "zerodhaClientId" | "capitalContributed" | "profitSharePercent" | "apiKey" | "apiSecret" | "zerodhaUserId" | "zerodhaPassword" | "form"
 }
 
 export async function createAccountAction(
@@ -22,6 +23,10 @@ export async function createAccountAction(
   const status = String(formData.get("status") ?? "active")
   const joinedDate = String(formData.get("joinedDate") ?? "")
   const notes = String(formData.get("notes") ?? "").trim()
+  const apiKey = String(formData.get("api_key") ?? "").trim()
+  const apiSecret = String(formData.get("api_secret") ?? "")
+  const zerodhaUserId = String(formData.get("zerodha_user_id") ?? "").trim()
+  const zerodhaPassword = String(formData.get("zerodha_password") ?? "")
   const capitalContributed = Number(capitalRaw)
   const profitSharePercent = Number(shareRaw)
 
@@ -29,6 +34,10 @@ export async function createAccountAction(
   if (!zerodhaClientId) {
     return { status: "error", field: "zerodhaClientId", message: "Zerodha client ID is required." }
   }
+  if (!apiKey) return { status: "error", field: "apiKey", message: "Kite API key is required." }
+  if (!apiSecret) return { status: "error", field: "apiSecret", message: "Kite API secret is required." }
+  if (!zerodhaUserId) return { status: "error", field: "zerodhaUserId", message: "Zerodha user ID is required." }
+  if (!zerodhaPassword) return { status: "error", field: "zerodhaPassword", message: "Zerodha password is required." }
   if (!Number.isFinite(capitalContributed) || capitalContributed < 0) {
     return { status: "error", field: "capitalContributed", message: "Capital must be zero or greater." }
   }
@@ -40,7 +49,7 @@ export async function createAccountAction(
   }
 
   try {
-    await createAccount({
+    await createAccountWithCredentials({
       name,
       zerodhaClientId,
       email,
@@ -50,12 +59,20 @@ export async function createAccountAction(
       status: status as "active" | "paused" | "closed",
       joinedDate: joinedDate || new Date().toISOString().slice(0, 10),
       notes,
+      apiKey,
+      apiSecretEncrypted: encryptKiteCredential(apiSecret),
+      zerodhaUserId,
+      zerodhaPasswordEncrypted: encryptKiteCredential(zerodhaPassword),
     })
     revalidatePath("/accounts")
     return { status: "success", message: "Account created successfully." }
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? error.code : undefined
     if (code === "23505") {
+      const constraint = error && typeof error === "object" && "constraint" in error ? String(error.constraint ?? "") : ""
+      if (constraint.includes("api_key")) {
+        return { status: "error", field: "apiKey", message: "That Kite API key is already registered to another account." }
+      }
       return {
         status: "error",
         field: "zerodhaClientId",

@@ -88,7 +88,7 @@ function mapReport(row: any): PeriodReport {
   }
 }
 
-export async function createAccount(input: {
+export async function createAccountWithCredentials(input: {
   name: string
   zerodhaClientId: string
   email?: string
@@ -98,23 +98,26 @@ export async function createAccount(input: {
   status: "active" | "paused" | "closed"
   joinedDate: string
   notes?: string
+  apiKey: string
+  apiSecretEncrypted: string
+  zerodhaUserId: string
+  zerodhaPasswordEncrypted: string
 }) {
-  const { data, error } = await createAdminClient()
-    .from("client_accounts")
-    .insert({
-      name: input.name,
-      zerodha_client_id: input.zerodhaClientId,
-      email: input.email || null,
-      phone: input.phone || null,
-      capital_contributed: input.capitalContributed,
-      profit_share_percent: input.profitSharePercent,
-      status: input.status,
-      joined_date: input.joinedDate,
-      notes: input.notes || null,
-    } as any)
-    .select("*")
-    .single()
-
+  const { data, error } = await (createAdminClient().rpc as any)("create_client_account_with_credentials", {
+    p_name: input.name,
+    p_zerodha_client_id: input.zerodhaClientId,
+    p_email: input.email || null,
+    p_phone: input.phone || null,
+    p_capital_contributed: input.capitalContributed,
+    p_profit_share_percent: input.profitSharePercent,
+    p_status: input.status,
+    p_joined_date: input.joinedDate,
+    p_notes: input.notes || null,
+    p_api_key: input.apiKey,
+    p_api_secret: input.apiSecretEncrypted,
+    p_zerodha_user_id: input.zerodhaUserId,
+    p_zerodha_password: input.zerodhaPasswordEncrypted,
+  })
   if (error) throw error
   return mapAccount(data)
 }
