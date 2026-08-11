@@ -77,6 +77,14 @@ export async function createAccountAction(
         message: "That Zerodha client ID is already registered.",
       }
     }
-    return { status: "error", field: "form", message: "Unable to create the account. Please try again." }
+    const databaseMessage = error && typeof error === "object" && "message" in error ? String(error.message ?? "") : ""
+    console.error("[v0] Unable to create account:", databaseMessage)
+    return {
+      status: "error",
+      field: "form",
+      message: databaseMessage.includes("kite_credentials")
+        ? "The account was not created because the Kite credentials table is unavailable. Apply the Supabase credentials migration first."
+        : "Unable to create the account. Please try again.",
+    }
   }
 }
