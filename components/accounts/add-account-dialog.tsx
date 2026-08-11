@@ -73,14 +73,14 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add client account</DialogTitle>
           <DialogDescription>
             Register a new managed Zerodha account with its Kite Connect credentials.
           </DialogDescription>
         </DialogHeader>
-        <form ref={formRef} action={formAction} id="add-account-form">
+        <form ref={formRef} action={formAction} id="add-account-form" className="min-h-0 overflow-y-auto pr-1">
           <FieldGroup>
             {state.status === "error" && state.field === "form" ? (
               <FieldError>{state.message}</FieldError>
