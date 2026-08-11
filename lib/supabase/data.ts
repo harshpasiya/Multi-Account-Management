@@ -88,6 +88,37 @@ function mapReport(row: any): PeriodReport {
   }
 }
 
+export async function createAccount(input: {
+  name: string
+  zerodhaClientId: string
+  email?: string
+  phone?: string
+  capitalContributed: number
+  profitSharePercent: number
+  status: "active" | "paused" | "closed"
+  joinedDate: string
+  notes?: string
+}) {
+  const { data, error } = await createAdminClient()
+    .from("client_accounts")
+    .insert({
+      name: input.name,
+      zerodha_client_id: input.zerodhaClientId,
+      email: input.email || null,
+      phone: input.phone || null,
+      capital_contributed: input.capitalContributed,
+      profit_share_percent: input.profitSharePercent,
+      status: input.status,
+      joined_date: input.joinedDate,
+      notes: input.notes || null,
+    } as any)
+    .select("*")
+    .single()
+
+  if (error) throw error
+  return mapAccount(data)
+}
+
 export async function getLiveAccounts() {
   const { data, error } = await createAdminClient()
     .from("client_accounts")
