@@ -1,10 +1,9 @@
 import { SessionChecklist } from "@/components/session/session-checklist";
-import { getActiveAccounts, getSessions } from "@/lib/mock-data";
+import { getLiveAccounts, getLiveSessions } from "@/lib/supabase/data";
 
-export default function SessionPage() {
-  // TODO: replace with live Kite Connect data — sessions reset daily.
-  const accounts = getActiveAccounts();
-  const sessions = getSessions();
+export default async function SessionPage() {
+  const [allAccounts, sessions] = await Promise.all([getLiveAccounts(), getLiveSessions()]);
+  const accounts = allAccounts.filter((account) => account.status === "active");
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-2">

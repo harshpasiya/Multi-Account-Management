@@ -1,23 +1,19 @@
 import type { Metadata } from "next"
 import { AccountsTable } from "@/components/accounts/accounts-table"
-import {
-  getAccounts,
-  getAccountPnl,
-  getTotalAum,
-  formatINR,
-} from "@/lib/mock-data"
+import { formatINR } from "@/lib/mock-data"
+import { getLiveAccounts, getLivePositions } from "@/lib/supabase/data"
 
 export const metadata: Metadata = {
   title: "Client Accounts",
 }
 
-export default function AccountsPage() {
-  const accounts = getAccounts()
+export default async function AccountsPage() {
+  const [accounts, positions] = await Promise.all([getLiveAccounts(), getLivePositions()])
   const pnlByAccount: Record<string, number> = {}
-  for (const a of accounts) {
-    pnlByAccount[a.id] = getAccountPnl(a.id)
+  for (const position of positions) {
+    pnlByAccount[position.accountId] = (pnlByAccount[position.accountId] ?? 0) + position.pnl
   }
-  const totalAum = getTotalAum()
+  const totalAum = accounts.reduce((sum, account) => sum + account.capitalContributed, 0)
   const activeCount = accounts.filter((a) => a.status === "active").length
 
   return (

@@ -1,21 +1,21 @@
 import type { Metadata } from "next"
 import { OrderTicket } from "@/components/trade/order-ticket"
-import {
-  getActiveAccounts,
-  getSessionByAccount,
-  getInstruments,
-} from "@/lib/mock-data"
+import { getLiveAccounts, getLiveSessions, getLiveInstruments } from "@/lib/supabase/data"
 
 export const metadata: Metadata = {
   title: "Place Order",
 }
 
-export default function TradePage() {
-  const accounts = getActiveAccounts().map((a) => ({
-    ...a,
-    session: getSessionByAccount(a.id)?.status ?? "not_started",
+export default async function TradePage() {
+  const [allAccounts, sessions, instruments] = await Promise.all([
+    getLiveAccounts(),
+    getLiveSessions(),
+    getLiveInstruments(),
+  ])
+  const accounts = allAccounts.filter((account) => account.status === "active").map((account) => ({
+    ...account,
+    session: sessions.find((session) => session.accountId === account.id)?.status ?? "not_started",
   }))
-  const instruments = getInstruments()
 
   return (
     <div className="flex flex-col gap-6">

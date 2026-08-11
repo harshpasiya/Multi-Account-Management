@@ -6,19 +6,15 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { ReportsTable } from "@/components/reports/reports-table"
-import {
-  getReports,
-  getAccounts,
-  formatINR,
-} from "@/lib/mock-data"
+import { formatINR } from "@/lib/mock-data"
+import { getLiveReports, getLiveAccounts } from "@/lib/supabase/data"
 
 export const metadata: Metadata = {
   title: "Payout Reports",
 }
 
-export default function ReportsPage() {
-  const reports = getReports()
-  const accounts = getAccounts()
+export default async function ReportsPage() {
+  const [reports, accounts] = await Promise.all([getLiveReports(), getLiveAccounts()])
   const accountNames: Record<string, string> = {}
   for (const a of accounts) accountNames[a.id] = a.name
 
