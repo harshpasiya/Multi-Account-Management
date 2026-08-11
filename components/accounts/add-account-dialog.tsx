@@ -73,14 +73,14 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
           </Button>
         }
       />
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-lg">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Add client account</DialogTitle>
           <DialogDescription>
             Register a new managed Zerodha account with its Kite Connect credentials.
           </DialogDescription>
         </DialogHeader>
-        <form ref={formRef} action={formAction} id="add-account-form" className="min-h-0 overflow-y-auto pr-1">
+        <form ref={formRef} action={formAction} id="add-account-form" className="fancy-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pr-3">
           <FieldGroup>
             {state.status === "error" && state.field === "form" ? (
               <FieldError>{state.message}</FieldError>
@@ -165,7 +165,7 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
             </Field>
           </FieldGroup>
         </form>
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <DialogClose render={<Button variant="outline">Cancel</Button>} />
           <SubmitButton />
         </DialogFooter>
