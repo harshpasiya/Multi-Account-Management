@@ -2,9 +2,7 @@
 
 // Daily client authentication checklist.
 // Each morning every client's Kite Connect access token has expired and must be
-// re-authenticated with a TOTP/OTP before trading. Form logic is isolated here
-// so the real Kite TOTP exchange can be wired in without touching shared layout.
-// TODO: replace with real Kite Connect TOTP exchange.
+// re-authenticated with a TOTP/OTP before trading.
 
 import * as React from "react";
 import { CheckCircle2, ShieldCheck, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
@@ -20,6 +18,7 @@ import {
 import { SessionStatusBadge } from "@/components/status-badges";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { authenticateKiteAccount } from "@/app/(app)/session/actions";
 import {
   formatTime,
   type ClientAccount,
@@ -58,68 +57,33 @@ export function SessionChecklist({
   const activeCount = state.filter((s) => s.status === "active").length;
   const progress = total ? (activeCount / total) * 100 : 0;
 
-  function authenticate(accountId: string) {
-    setState((prev) =>
-      prev.map((s) =>
-        s.accountId === accountId ? { ...s, pending: true } : s,
-      ),
-    );
-    // Simulate the TOTP exchange round-trip.
-    setTimeout(() => {
-      setState((prev) =>
-        prev.map((s) =>
-          s.accountId === accountId
-            ? {
-                ...s,
-                pending: false,
-                status: "active",
-                otp: "",
-                lastAuthenticatedAt: new Date().toISOString(),
-                expiresAt: new Date().toISOString(),
-              }
-            : s,
-        ),
-      );
-      const acc = accountsById.get(accountId);
-      toast.success(`${acc?.name} authenticated`, {
-        description: "Kite session active for today's trading.",
-      });
-    }, 900);
+  async function authenticate(accountId: string, otpOverride?: string) {
+    const otp = otpOverride ?? state.find((s) => s.accountId === accountId)?.otp ?? "";
+    setState((prev) => prev.map((s) => s.accountId === accountId ? { ...s, pending: true, status: "awaiting_otp" } : s));
+    const result = await authenticateKiteAccount(accountId, otp);
+    const account = accountsById.get(accountId);
+    if (result.ok) {
+      setState((prev) => prev.map((s) => s.accountId === accountId ? { ...s, pending: false, status: "active", otp: "", lastAuthenticatedAt: new Date().toISOString(), expiresAt: result.expiresAt } : s));
+      toast.success(`${account?.name} authenticated`, { description: "Kite session active for today's trading." });
+    } else {
+      setState((prev) => prev.map((s) => s.accountId === accountId ? { ...s, pending: false, status: "failed" } : s));
+      toast.error(`${account?.name} authentication failed`, { description: result.message });
+    }
+    return result.ok;
   }
 
-  function authenticateAll() {
-    const pendingIds = state
-      .filter((s) => s.status !== "active")
-      .map((s) => s.accountId);
+  async function authenticateAll() {
+    const pendingIds = state.filter((s) => s.status !== "active").map((s) => s.accountId);
     if (pendingIds.length === 0) return;
-    setState((prev) =>
-      prev.map((s) =>
-        s.status !== "active" ? { ...s, pending: true } : s,
-      ),
-    );
-    pendingIds.forEach((id, i) => {
-      setTimeout(
-        () => {
-          setState((prev) =>
-            prev.map((s) =>
-              s.accountId === id
-                ? {
-                    ...s,
-                    pending: false,
-                    status: "active",
-                    otp: "",
-                    lastAuthenticatedAt: new Date().toISOString(),
-                  }
-                : s,
-            ),
-          );
-        },
-        500 + i * 450,
-      );
-    });
-    toast.info(`Authenticating ${pendingIds.length} accounts…`, {
-      description: "Sending TOTP for each pending client session.",
-    });
+    toast.info(`Authenticating ${pendingIds.length} accounts…`, { description: "Processing client sessions sequentially." });
+    for (const id of pendingIds) {
+      const otp = state.find((s) => s.accountId === id)?.otp ?? "";
+      if (otp.length !== 6) {
+        setState((prev) => prev.map((s) => s.accountId === id ? { ...s, status: "failed" } : s));
+        continue;
+      }
+      await authenticate(id, otp);
+    }
   }
 
   function setOtp(accountId: string, otp: string) {
