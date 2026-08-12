@@ -100,11 +100,9 @@ export async function createAccountWithCredentials(input: {
   notes?: string
   apiKey: string
   apiSecretEncrypted: string
-  zerodhaUserId: string
   zerodhaPasswordEncrypted: string
 }) {
-  const supabase = createAdminClient()
-  const rpcResult = await (supabase.rpc as any)("create_client_account_with_credentials", {
+  const { data, error } = await (createAdminClient().rpc as any)("create_client_account_with_credentials", {
     p_name: input.name,
     p_zerodha_client_id: input.zerodhaClientId,
     p_email: input.email || null,
@@ -116,46 +114,10 @@ export async function createAccountWithCredentials(input: {
     p_notes: input.notes || null,
     p_api_key: input.apiKey,
     p_api_secret: input.apiSecretEncrypted,
-    p_zerodha_user_id: input.zerodhaUserId,
     p_zerodha_password: input.zerodhaPasswordEncrypted,
   })
-
-  if (!rpcResult.error) return mapAccount(rpcResult.data)
-  if (rpcResult.error.code !== "PGRST202" && rpcResult.error.code !== "404") throw rpcResult.error
-
-  // The RPC migration may not be applied yet. Use the same service-role client
-  // with compensating cleanup so the existing form remains usable meanwhile.
-  const { data: accountRow, error: accountError } = await supabase
-    .from("client_accounts")
-    .insert({
-      name: input.name,
-      zerodha_client_id: input.zerodhaClientId,
-      email: input.email || null,
-      phone: input.phone || null,
-      capital_contributed: input.capitalContributed,
-      profit_share_percent: input.profitSharePercent,
-      status: input.status,
-      joined_date: input.joinedDate,
-      notes: input.notes || null,
-    } as any)
-    .select("*")
-    .single()
-  if (accountError) throw accountError
-  const account = accountRow as any
-
-  const { error: credentialError } = await supabase.from("kite_credentials").insert({
-    account_id: account.id,
-    api_key: input.apiKey,
-    api_secret: input.apiSecretEncrypted,
-    zerodha_user_id: input.zerodhaUserId,
-    zerodha_password: input.zerodhaPasswordEncrypted,
-    access_token: null,
-  } as any)
-  if (credentialError) {
-    await supabase.from("client_accounts").delete().eq("id", account.id)
-    throw credentialError
-  }
-  return mapAccount(account)
+  if (error) throw error
+  return mapAccount(data)
 }
 
 export async function getLiveAccounts() {

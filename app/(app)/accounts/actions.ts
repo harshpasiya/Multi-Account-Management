@@ -59,7 +59,6 @@ export async function createAccountAction(
       notes,
       apiKey,
       apiSecretEncrypted: encryptKiteCredential(apiSecret),
-      zerodhaUserId: zerodhaClientId,
       zerodhaPasswordEncrypted: encryptKiteCredential(zerodhaPassword),
     })
     revalidatePath("/accounts")
@@ -67,24 +66,18 @@ export async function createAccountAction(
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? error.code : undefined
     if (code === "23505") {
-      const constraint = error && typeof error === "object" && "constraint" in error ? String(error.constraint ?? "") : ""
-      if (constraint.includes("api_key")) {
-        return { status: "error", field: "apiKey", message: "That Kite API key is already registered to another account." }
+      const details = JSON.stringify(error).toLowerCase()
+      if (details.includes("api_key")) {
+        return { status: "error", field: "apiKey", message: "This API key is already in use by another account." }
       }
       return {
         status: "error",
         field: "zerodhaClientId",
-        message: "That Zerodha client ID is already registered.",
+        message: "An account with this Zerodha client ID already exists.",
       }
     }
-    const databaseMessage = error && typeof error === "object" && "message" in error ? String(error.message ?? "") : ""
+    const databaseMessage = error && typeof error === "object" && "message" in error ? String(error.message ?? "") : String(error ?? "Unknown database error")
     console.error("[v0] Unable to create account:", databaseMessage)
-    return {
-      status: "error",
-      field: "form",
-      message: databaseMessage.includes("kite_credentials")
-        ? "The account was not created because the Kite credentials table is unavailable. Apply the Supabase credentials migration first."
-        : "Unable to create the account. Please try again.",
-    }
+    return { status: "error", field: "form", message: databaseMessage.slice(0, 300) }
   }
 }

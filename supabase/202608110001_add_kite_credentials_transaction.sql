@@ -22,7 +22,6 @@ create or replace function public.create_client_account_with_credentials(
   p_notes text,
   p_api_key text,
   p_api_secret text,
-  p_zerodha_user_id text,
   p_zerodha_password text
 )
 returns public.client_accounts
@@ -41,9 +40,9 @@ begin
   ) returning * into created_account;
 
   insert into public.kite_credentials (
-    account_id, api_key, api_secret, zerodha_user_id, zerodha_password, access_token
+    account_id, api_key, api_secret, zerodha_password, access_token
   ) values (
-    created_account.id, p_api_key, p_api_secret, p_zerodha_user_id, p_zerodha_password, null
+    created_account.id, p_api_key, p_api_secret, p_zerodha_password, null
   );
 
   return created_account;
@@ -51,8 +50,8 @@ end;
 $$;
 
 revoke all on function public.create_client_account_with_credentials(
-  text, text, text, text, numeric, numeric, text, date, text, text, text, text, text
+  text, text, text, text, numeric, numeric, text, date, text, text, text, text
 ) from public, anon, authenticated;
 grant execute on function public.create_client_account_with_credentials(
-  text, text, text, text, numeric, numeric, text, date, text, text, text, text, text
+  text, text, text, text, numeric, numeric, text, date, text, text, text, text
 ) to service_role;
