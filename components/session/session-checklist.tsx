@@ -52,7 +52,11 @@ export function SessionChecklist({
 
   function authenticate(accountId: string) {
     setState((prev) => prev.map((s) => s.accountId === accountId ? { ...s, pending: true } : s));
-    window.location.assign(`/api/kite/login/${encodeURIComponent(accountId)}`);
+    const loginUrl = `/api/kite/login/${encodeURIComponent(accountId)}`;
+    const popup = window.open(loginUrl, "kite-login", "noopener,noreferrer");
+    if (!popup) {
+      window.location.assign(loginUrl);
+    }
   }
 
   function authenticateAll() {
