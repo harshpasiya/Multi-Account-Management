@@ -5,27 +5,21 @@
 // re-authenticated with a TOTP/OTP before trading.
 
 import * as React from "react";
-import { CheckCircle2, ShieldCheck, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { CheckCircle2, ShieldCheck, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 import { SessionStatusBadge } from "@/components/status-badges";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { authenticateKiteAccount } from "@/app/(app)/session/actions";
 import {
   formatTime,
   type ClientAccount,
   type ClientSession,
 } from "@/lib/mock-data";
 
-type SessionState = ClientSession & { otp: string; pending: boolean };
+type SessionState = ClientSession & { pending: boolean };
 
 export function SessionChecklist({
   accounts,
@@ -42,7 +36,6 @@ export function SessionChecklist({
         status: s?.status ?? "not_started",
         lastAuthenticatedAt: s?.lastAuthenticatedAt,
         expiresAt: s?.expiresAt,
-        otp: "",
         pending: false,
       };
     }),
@@ -57,47 +50,16 @@ export function SessionChecklist({
   const activeCount = state.filter((s) => s.status === "active").length;
   const progress = total ? (activeCount / total) * 100 : 0;
 
-  async function authenticate(accountId: string, otpOverride?: string) {
-    const otp = otpOverride ?? state.find((s) => s.accountId === accountId)?.otp ?? "";
-    setState((prev) => prev.map((s) => s.accountId === accountId ? { ...s, pending: true, status: "awaiting_otp" } : s));
-    const result = await authenticateKiteAccount(accountId, otp);
-    const account = accountsById.get(accountId);
-    if (result.ok) {
-      setState((prev) => prev.map((s) => s.accountId === accountId ? { ...s, pending: false, status: "active", otp: "", lastAuthenticatedAt: new Date().toISOString(), expiresAt: result.expiresAt } : s));
-      toast.success(`${account?.name} authenticated`, { description: "Kite session active for today's trading." });
-    } else {
-      setState((prev) => prev.map((s) => s.accountId === accountId ? { ...s, pending: false, status: "failed" } : s));
-      toast.error(`${account?.name} authentication failed`, { description: result.message });
-    }
-    return result.ok;
+  function authenticate(accountId: string) {
+    setState((prev) => prev.map((s) => s.accountId === accountId ? { ...s, pending: true } : s));
+    window.location.assign(`/api/kite/login/${encodeURIComponent(accountId)}`);
   }
 
-  async function authenticateAll() {
-    const pendingIds = state.filter((s) => s.status !== "active").map((s) => s.accountId);
-    if (pendingIds.length === 0) return;
-    toast.info(`Authenticating ${pendingIds.length} accounts…`, { description: "Processing client sessions sequentially." });
-    for (const id of pendingIds) {
-      const otp = state.find((s) => s.accountId === id)?.otp ?? "";
-      if (otp.length !== 6) {
-        setState((prev) => prev.map((s) => s.accountId === id ? { ...s, status: "failed" } : s));
-        continue;
-      }
-      await authenticate(id, otp);
-    }
-  }
-
-  function setOtp(accountId: string, otp: string) {
-    setState((prev) =>
-      prev.map((s) =>
-        s.accountId === accountId
-          ? {
-              ...s,
-              otp,
-              status: s.status === "not_started" ? "awaiting_otp" : s.status,
-            }
-          : s,
-      ),
-    );
+  function authenticateAll() {
+    const pending = state.find((s) => s.status !== "active");
+    if (!pending) return;
+    toast.info("Authenticate each account through Kite", { description: "Kite will open its official login page." });
+    authenticate(pending.accountId);
   }
 
   const allDone = activeCount === total;
@@ -213,33 +175,10 @@ export function SessionChecklist({
                       <span>Ready to trade</span>
                     </div>
                   ) : (
-                    <>
-                      <InputOTP
-                        maxLength={6}
-                        value={s.otp}
-                        onChange={(v) => setOtp(s.accountId, v)}
-                        disabled={s.pending}
-                      >
-                        <InputOTPGroup>
-                          {Array.from({ length: 6 }).map((_, i) => (
-                            <InputOTPSlot key={i} index={i} className="size-9" />
-                          ))}
-                        </InputOTPGroup>
-                      </InputOTP>
-                      <Button
-                        size="sm"
-                        variant={s.status === "failed" ? "outline" : "default"}
-                        disabled={s.otp.length !== 6 || s.pending}
-                        onClick={() => authenticate(s.accountId)}
-                      >
-                        {s.pending ? (
-                          <Loader2 className="animate-spin" data-icon="inline-start" />
-                        ) : s.status === "failed" ? (
-                          <RefreshCw data-icon="inline-start" />
-                        ) : null}
-                        {s.status === "failed" ? "Retry" : "Authenticate"}
-                      </Button>
-                    </>
+                    <Button size="sm" variant={s.status === "failed" ? "outline" : "default"} disabled={s.pending} onClick={() => authenticate(s.accountId)}>
+                      <ExternalLink data-icon="inline-start" />
+                      {s.pending ? "Opening Kite…" : s.status === "failed" ? "Retry login" : "Login with Kite"}
+                    </Button>
                   )}
                 </div>
               </div>
@@ -250,8 +189,7 @@ export function SessionChecklist({
 
       <Separator />
       <p className="text-xs text-muted-foreground">
-        Enter the 6-digit TOTP from each client&apos;s authenticator app. Sessions
-        expire at market close and must be re-authenticated tomorrow morning.
+        Login opens Zerodha&apos;s official Kite Connect page. Complete the login and two-factor verification there; sessions expire at market close and must be re-authenticated tomorrow morning.
       </p>
     </div>
   );
