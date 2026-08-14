@@ -2,7 +2,7 @@
 
 // Daily client authentication checklist.
 // Each morning every client's Kite Connect access token has expired and must be
-// re-authenticated with a TOTP/OTP before trading.
+// re-authenticated through Kite's official browser login before trading.
 
 import * as React from "react";
 import { CheckCircle2, ShieldCheck, AlertTriangle, ExternalLink } from "lucide-react";
@@ -58,7 +58,7 @@ export function SessionChecklist({
   function authenticateAll() {
     const pending = state.find((s) => s.status !== "active");
     if (!pending) return;
-    toast.info("Authenticate each account through Kite", { description: "Kite will open its official login page." });
+    toast.info("Authenticate each account through Kite", { description: "Complete one Kite login, then return here for the next account." });
     authenticate(pending.accountId);
   }
 

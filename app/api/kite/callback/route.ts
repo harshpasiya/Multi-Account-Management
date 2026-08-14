@@ -3,7 +3,7 @@ import { encryptKiteCredential } from "@/lib/kite-crypto"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 function redirectTo(request: Request, status: string, message?: string) {
-  const url = new URL("/session", request.url)
+  const url = new URL("/session", process.env.KITE_REDIRECT_URL ?? request.url)
   url.searchParams.set("kite", status)
   if (message) url.searchParams.set("message", message)
   return Response.redirect(url)
@@ -13,9 +13,10 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const accountId = url.searchParams.get("state")
   const requestToken = url.searchParams.get("request_token")
+  const callbackError = url.searchParams.get("error_type")
   const error = url.searchParams.get("error")
 
-  if (error) return redirectTo(request, "cancelled", "Kite login was cancelled.")
+  if (error || callbackError) return redirectTo(request, "cancelled", "Kite login was cancelled or rejected.")
   if (!accountId || !requestToken) return redirectTo(request, "error", "Kite did not return a request token.")
 
   const supabase = createAdminClient() as any
