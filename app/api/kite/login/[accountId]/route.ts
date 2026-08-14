@@ -16,10 +16,7 @@ export async function GET(
     return Response.json({ error: "Kite credentials were not found for this account." }, { status: 404 })
   }
 
-  const redirectUri = process.env.KITE_REDIRECT_URL
-  if (!redirectUri) {
-    return Response.json({ error: "KITE_REDIRECT_URL is not configured." }, { status: 500 })
-  }
+  const redirectUri = process.env.KITE_REDIRECT_URL || new URL("/api/kite/callback", request.url).toString()
 
   const url = new URL("https://kite.zerodha.com/connect/login")
   url.searchParams.set("v", "3")

@@ -3,7 +3,10 @@ import { encryptKiteCredential } from "@/lib/kite-crypto"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 function redirectTo(request: Request, status: string, message?: string) {
-  const url = new URL("/session", process.env.KITE_REDIRECT_URL ?? request.url)
+  const baseUrl = process.env.KITE_REDIRECT_URL
+    ? new URL(process.env.KITE_REDIRECT_URL).origin
+    : new URL(request.url).origin
+  const url = new URL("/session", baseUrl)
   url.searchParams.set("kite", status)
   if (message) url.searchParams.set("message", message)
   return Response.redirect(url)
