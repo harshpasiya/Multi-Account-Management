@@ -18,9 +18,19 @@ export async function GET(request: Request) {
   const requestToken = url.searchParams.get("request_token")
   const callbackError = url.searchParams.get("error_type")
   const error = url.searchParams.get("error")
+  const status = url.searchParams.get("status")
+  const action = url.searchParams.get("action")
+  const callbackMessage = url.searchParams.get("message")
 
-  if (error || callbackError) return redirectTo(request, "cancelled", "Kite login was cancelled or rejected.")
-  if (!accountId || !requestToken) return redirectTo(request, "error", "Kite did not return a request token.")
+  // Kite sends status=failure and a message when the user rejects or the
+  // redirect/API-key configuration is invalid; it does not always send error.
+  if (error || callbackError || status === "failure") {
+    return redirectTo(request, "cancelled", callbackMessage || callbackError || error || "Kite login was cancelled or rejected.")
+  }
+  if (!accountId) return redirectTo(request, "error", "Kite did not return the account state. Check the registered redirect URL.")
+  if (!requestToken) {
+    return redirectTo(request, "error", callbackMessage || `Kite did not return a request token (status: ${status || "missing"}, action: ${action || "missing"}). Check that the exact callback URL is registered in Kite Connect.`)
+  }
 
   const supabase = createAdminClient() as any
   const { data: credential, error: credentialError } = await supabase
