@@ -1,8 +1,11 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import * as React from "react"
+import { useActionState } from "react"
+import { useFormStatus } from "react-dom"
+import { useRouter } from "next/navigation"
+import { Plus } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -12,14 +15,15 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogClose,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import {
   Field,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldDescription,
-} from "@/components/ui/field";
+} from "@/components/ui/field"
 import {
   Select,
   SelectContent,
@@ -27,34 +31,37 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { toast } from "sonner";
+} from "@/components/ui/select"
+import { createAccountAction } from "@/app/(app)/accounts/actions"
+
+type ActionState = Awaited<ReturnType<typeof createAccountAction>>
+const initialState: ActionState = { status: "idle" }
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" form="add-account-form" disabled={pending}>
+      {pending ? "Creating…" : "Create account"}
+    </Button>
+  )
+}
 
 export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
-  const [open, setOpen] = React.useState(false);
+  const router = useRouter()
+  const [open, setOpen] = React.useState(false)
+  const [state, formAction] = useActionState(createAccountAction, initialState)
+  const formRef = React.useRef<HTMLFormElement>(null)
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const data = new FormData(form);
-    // No real submit logic — just log the typed payload shape.
-    const payload = {
-      name: data.get("name"),
-      zerodhaClientId: data.get("zerodhaClientId"),
-      email: data.get("email"),
-      phone: data.get("phone"),
-      capitalContributed: Number(data.get("capitalContributed")),
-      profitSharePercent: Number(data.get("profitSharePercent")),
-      status: data.get("status"),
-      notes: data.get("notes"),
-    };
-    // TODO: replace with real create-account API call.
-    console.log("[v0] new account payload:", payload);
-    toast.success("Account draft captured", {
-      description: `${payload.name} (${payload.zerodhaClientId}) — payload logged to console.`,
-    });
-    setOpen(false);
-  }
+  React.useEffect(() => {
+    if (state.status === "success") {
+      formRef.current?.reset()
+      setOpen(false)
+      router.refresh()
+    }
+  }, [router, state.status])
+
+  const errorFor = (field: ActionState["field"]) =>
+    state.status === "error" && state.field === field ? state.message : undefined
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -66,79 +73,73 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-lg">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Add client account</DialogTitle>
           <DialogDescription>
-            Register a new managed Zerodha account. Kite API keys are connected
-            separately in Settings.
+            Register a new managed Zerodha account with its Kite Connect credentials.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} id="add-account-form">
+        <form ref={formRef} action={formAction} id="add-account-form" className="fancy-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pr-3">
           <FieldGroup>
+            {state.status === "error" && state.field === "form" ? (
+              <FieldError>{state.message}</FieldError>
+            ) : null}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field>
+              <Field data-invalid={Boolean(errorFor("name"))}>
                 <FieldLabel htmlFor="name">Client name</FieldLabel>
-                <Input id="name" name="name" placeholder="Full name" required />
+                <Input id="name" name="name" placeholder="Full name" aria-invalid={Boolean(errorFor("name"))} required />
+                {errorFor("name") ? <FieldError>{errorFor("name")}</FieldError> : null}
               </Field>
-              <Field>
-                <FieldLabel htmlFor="zerodhaClientId">
-                  Zerodha client ID
-                </FieldLabel>
-                <Input
-                  id="zerodhaClientId"
-                  name="zerodhaClientId"
-                  placeholder="AB1234"
-                  required
-                />
+              <Field data-invalid={Boolean(errorFor("zerodhaClientId"))}>
+                <FieldLabel htmlFor="zerodhaClientId">Zerodha client ID</FieldLabel>
+                <Input id="zerodhaClientId" name="zerodhaClientId" placeholder="AB1234" aria-invalid={Boolean(errorFor("zerodhaClientId"))} required />
+                {errorFor("zerodhaClientId") ? <FieldError>{errorFor("zerodhaClientId")}</FieldError> : null}
               </Field>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="name@example.in"
-                />
+                <Input id="email" name="email" type="email" placeholder="name@example.in" />
               </Field>
               <Field>
                 <FieldLabel htmlFor="phone">Phone</FieldLabel>
                 <Input id="phone" name="phone" placeholder="+91 …" />
               </Field>
-              <Field>
-                <FieldLabel htmlFor="capitalContributed">
-                  Capital contributed (₹)
-                </FieldLabel>
-                <Input
-                  id="capitalContributed"
-                  name="capitalContributed"
-                  type="number"
-                  min={0}
-                  placeholder="1000000"
-                  required
-                />
+              <Field data-invalid={Boolean(errorFor("capitalContributed"))}>
+                <FieldLabel htmlFor="capitalContributed">Capital contributed (₹)</FieldLabel>
+                <Input id="capitalContributed" name="capitalContributed" type="number" min={0} step="0.01" placeholder="1000000" aria-invalid={Boolean(errorFor("capitalContributed"))} required />
+                {errorFor("capitalContributed") ? <FieldError>{errorFor("capitalContributed")}</FieldError> : null}
               </Field>
-              <Field>
-                <FieldLabel htmlFor="profitSharePercent">
-                  Profit share (%)
-                </FieldLabel>
-                <Input
-                  id="profitSharePercent"
-                  name="profitSharePercent"
-                  type="number"
-                  min={0}
-                  max={100}
-                  defaultValue={defaultShare}
-                  required
-                />
+              <Field data-invalid={Boolean(errorFor("profitSharePercent"))}>
+                <FieldLabel htmlFor="profitSharePercent">Profit share (%)</FieldLabel>
+                <Input id="profitSharePercent" name="profitSharePercent" type="number" min={0} max={100} step="0.01" defaultValue={defaultShare} aria-invalid={Boolean(errorFor("profitSharePercent"))} required />
+                {errorFor("profitSharePercent") ? <FieldError>{errorFor("profitSharePercent")}</FieldError> : null}
+              </Field>
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-sm font-semibold">Zerodha / Kite Connect credentials</p>
+              <p className="mt-1 text-sm text-muted-foreground">Required to authenticate and trade this client account. Access tokens are created during daily login.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field data-invalid={Boolean(errorFor("apiKey"))}>
+                <FieldLabel htmlFor="api_key">API key</FieldLabel>
+                <Input id="api_key" name="api_key" aria-invalid={Boolean(errorFor("apiKey"))} required />
+                {errorFor("apiKey") ? <FieldError>{errorFor("apiKey")}</FieldError> : null}
+              </Field>
+              <Field data-invalid={Boolean(errorFor("apiSecret"))}>
+                <FieldLabel htmlFor="api_secret">API secret</FieldLabel>
+                <Input id="api_secret" name="api_secret" type="password" aria-invalid={Boolean(errorFor("apiSecret"))} required />
+                {errorFor("apiSecret") ? <FieldError>{errorFor("apiSecret")}</FieldError> : null}
+              </Field>
+              <Field data-invalid={Boolean(errorFor("zerodhaPassword"))}>
+                <FieldLabel htmlFor="zerodha_password">Zerodha password</FieldLabel>
+                <Input id="zerodha_password" name="zerodha_password" type="password" aria-invalid={Boolean(errorFor("zerodhaPassword"))} required />
+                {errorFor("zerodhaPassword") ? <FieldError>{errorFor("zerodhaPassword")}</FieldError> : null}
               </Field>
             </div>
             <Field>
               <FieldLabel htmlFor="status">Status</FieldLabel>
               <Select name="status" defaultValue="active">
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     <SelectItem value="active">Active</SelectItem>
@@ -149,25 +150,21 @@ export function AddAccountDialog({ defaultShare }: { defaultShare: number }) {
               </Select>
             </Field>
             <Field>
+              <FieldLabel htmlFor="joinedDate">Joined date</FieldLabel>
+              <Input id="joinedDate" name="joinedDate" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required />
+            </Field>
+            <Field>
               <FieldLabel htmlFor="notes">Notes</FieldLabel>
-              <Input
-                id="notes"
-                name="notes"
-                placeholder="Optional — mandate, preferences, etc."
-              />
-              <FieldDescription>
-                Form only — submitting logs the payload to the console.
-              </FieldDescription>
+              <Input id="notes" name="notes" placeholder="Optional — mandate, preferences, etc." />
+              <FieldDescription>Account details are stored securely in Supabase.</FieldDescription>
             </Field>
           </FieldGroup>
         </form>
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <DialogClose render={<Button variant="outline">Cancel</Button>} />
-          <Button type="submit" form="add-account-form">
-            Create account
-          </Button>
+          <SubmitButton />
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

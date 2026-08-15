@@ -1,10 +1,10 @@
 import { SessionChecklist } from "@/components/session/session-checklist";
-import { getActiveAccounts, getSessions } from "@/lib/mock-data";
+import { getLiveAccounts, getLiveSessions } from "@/lib/supabase/data";
 
-export default function SessionPage() {
-  // TODO: replace with live Kite Connect data — sessions reset daily.
-  const accounts = getActiveAccounts();
-  const sessions = getSessions();
+export default async function SessionPage({ searchParams }: { searchParams: Promise<{ kite?: string; message?: string }> }) {
+  const params = await searchParams
+  const [allAccounts, sessions] = await Promise.all([getLiveAccounts(), getLiveSessions()]);
+  const accounts = allAccounts.filter((account) => account.status === "active");
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-2">
@@ -17,6 +17,11 @@ export default function SessionPage() {
           Kite session for the day.
         </p>
       </div>
+      {params.kite ? (
+        <div className={params.kite === "success" ? "rounded-md border border-profit/30 bg-profit/10 px-4 py-3 text-sm text-profit" : "rounded-md border border-loss/30 bg-loss/10 px-4 py-3 text-sm text-loss"}>
+          {params.message ?? (params.kite === "success" ? "Kite authentication completed." : "Kite authentication could not be completed.")}
+        </div>
+      ) : null}
       <div className="mt-2">
         <SessionChecklist accounts={accounts} sessions={sessions} />
       </div>

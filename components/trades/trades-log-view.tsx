@@ -60,7 +60,7 @@ export function TradesLogView({
           />
         </InputGroup>
         <div className="grid grid-cols-3 gap-3 lg:flex lg:items-center">
-          <Select value={account} onValueChange={setAccount}>
+          <Select value={account} onValueChange={(value) => setAccount(value ?? "all")}>
             <SelectTrigger className="lg:w-44">
               <SelectValue placeholder="Account" />
             </SelectTrigger>
@@ -75,7 +75,7 @@ export function TradesLogView({
               </SelectGroup>
             </SelectContent>
           </Select>
-          <Select value={side} onValueChange={setSide}>
+          <Select value={side} onValueChange={(value) => setSide(value ?? "all")}>
             <SelectTrigger className="lg:w-32">
               <SelectValue placeholder="Side" />
             </SelectTrigger>
@@ -87,7 +87,7 @@ export function TradesLogView({
               </SelectGroup>
             </SelectContent>
           </Select>
-          <Select value={status} onValueChange={setStatus}>
+          <Select value={status} onValueChange={(value) => setStatus(value ?? "all")}>
             <SelectTrigger className="lg:w-36">
               <SelectValue placeholder="Status" />
             </SelectTrigger>

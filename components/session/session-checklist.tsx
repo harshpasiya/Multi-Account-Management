@@ -2,21 +2,14 @@
 
 // Daily client authentication checklist.
 // Each morning every client's Kite Connect access token has expired and must be
-// re-authenticated with a TOTP/OTP before trading. Form logic is isolated here
-// so the real Kite TOTP exchange can be wired in without touching shared layout.
-// TODO: replace with real Kite Connect TOTP exchange.
+// re-authenticated through Kite's official browser login before trading.
 
 import * as React from "react";
-import { CheckCircle2, ShieldCheck, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { CheckCircle2, ShieldCheck, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 import { SessionStatusBadge } from "@/components/status-badges";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -26,7 +19,7 @@ import {
   type ClientSession,
 } from "@/lib/mock-data";
 
-type SessionState = ClientSession & { otp: string; pending: boolean };
+type SessionState = ClientSession & { pending: boolean };
 
 export function SessionChecklist({
   accounts,
@@ -43,7 +36,6 @@ export function SessionChecklist({
         status: s?.status ?? "not_started",
         lastAuthenticatedAt: s?.lastAuthenticatedAt,
         expiresAt: s?.expiresAt,
-        otp: "",
         pending: false,
       };
     }),
@@ -59,81 +51,19 @@ export function SessionChecklist({
   const progress = total ? (activeCount / total) * 100 : 0;
 
   function authenticate(accountId: string) {
-    setState((prev) =>
-      prev.map((s) =>
-        s.accountId === accountId ? { ...s, pending: true } : s,
-      ),
-    );
-    // Simulate the TOTP exchange round-trip.
-    setTimeout(() => {
-      setState((prev) =>
-        prev.map((s) =>
-          s.accountId === accountId
-            ? {
-                ...s,
-                pending: false,
-                status: "active",
-                otp: "",
-                lastAuthenticatedAt: new Date().toISOString(),
-                expiresAt: new Date().toISOString(),
-              }
-            : s,
-        ),
-      );
-      const acc = accountsById.get(accountId);
-      toast.success(`${acc?.name} authenticated`, {
-        description: "Kite session active for today's trading.",
-      });
-    }, 900);
+    setState((prev) => prev.map((s) => s.accountId === accountId ? { ...s, pending: true } : s));
+    const loginUrl = `/api/kite/login/${encodeURIComponent(accountId)}`;
+    const popup = window.open(loginUrl, "kite-login", "noopener,noreferrer");
+    if (!popup) {
+      window.location.assign(loginUrl);
+    }
   }
 
   function authenticateAll() {
-    const pendingIds = state
-      .filter((s) => s.status !== "active")
-      .map((s) => s.accountId);
-    if (pendingIds.length === 0) return;
-    setState((prev) =>
-      prev.map((s) =>
-        s.status !== "active" ? { ...s, pending: true } : s,
-      ),
-    );
-    pendingIds.forEach((id, i) => {
-      setTimeout(
-        () => {
-          setState((prev) =>
-            prev.map((s) =>
-              s.accountId === id
-                ? {
-                    ...s,
-                    pending: false,
-                    status: "active",
-                    otp: "",
-                    lastAuthenticatedAt: new Date().toISOString(),
-                  }
-                : s,
-            ),
-          );
-        },
-        500 + i * 450,
-      );
-    });
-    toast.info(`Authenticating ${pendingIds.length} accounts…`, {
-      description: "Sending TOTP for each pending client session.",
-    });
-  }
-
-  function setOtp(accountId: string, otp: string) {
-    setState((prev) =>
-      prev.map((s) =>
-        s.accountId === accountId
-          ? {
-              ...s,
-              otp,
-              status: s.status === "not_started" ? "awaiting_otp" : s.status,
-            }
-          : s,
-      ),
-    );
+    const pending = state.find((s) => s.status !== "active");
+    if (!pending) return;
+    toast.info("Authenticate each account through Kite", { description: "Complete one Kite login, then return here for the next account." });
+    authenticate(pending.accountId);
   }
 
   const allDone = activeCount === total;
@@ -249,33 +179,10 @@ export function SessionChecklist({
                       <span>Ready to trade</span>
                     </div>
                   ) : (
-                    <>
-                      <InputOTP
-                        maxLength={6}
-                        value={s.otp}
-                        onChange={(v) => setOtp(s.accountId, v)}
-                        disabled={s.pending}
-                      >
-                        <InputOTPGroup>
-                          {Array.from({ length: 6 }).map((_, i) => (
-                            <InputOTPSlot key={i} index={i} className="size-9" />
-                          ))}
-                        </InputOTPGroup>
-                      </InputOTP>
-                      <Button
-                        size="sm"
-                        variant={s.status === "failed" ? "outline" : "default"}
-                        disabled={s.otp.length !== 6 || s.pending}
-                        onClick={() => authenticate(s.accountId)}
-                      >
-                        {s.pending ? (
-                          <Loader2 className="animate-spin" data-icon="inline-start" />
-                        ) : s.status === "failed" ? (
-                          <RefreshCw data-icon="inline-start" />
-                        ) : null}
-                        {s.status === "failed" ? "Retry" : "Authenticate"}
-                      </Button>
-                    </>
+                    <Button size="sm" variant={s.status === "failed" ? "outline" : "default"} disabled={s.pending} onClick={() => authenticate(s.accountId)}>
+                      <ExternalLink data-icon="inline-start" />
+                      {s.pending ? "Opening Kite…" : s.status === "failed" ? "Retry login" : "Login with Kite"}
+                    </Button>
                   )}
                 </div>
               </div>
@@ -286,8 +193,7 @@ export function SessionChecklist({
 
       <Separator />
       <p className="text-xs text-muted-foreground">
-        Enter the 6-digit TOTP from each client&apos;s authenticator app. Sessions
-        expire at market close and must be re-authenticated tomorrow morning.
+        Login opens Zerodha&apos;s official Kite Connect page. Complete the login and two-factor verification there; sessions expire at market close and must be re-authenticated tomorrow morning.
       </p>
     </div>
   );

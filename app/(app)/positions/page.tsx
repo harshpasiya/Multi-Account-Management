@@ -2,21 +2,16 @@ import type { Metadata } from "next"
 import { Card, CardHeader, CardDescription, CardTitle } from "@/components/ui/card"
 import { PositionsView } from "@/components/positions/positions-view"
 import { PnlValue } from "@/components/pnl-value"
-import {
-  getPositions,
-  getAccounts,
-  getAggregatePnl,
-  formatNumber,
-} from "@/lib/mock-data"
+import { formatNumber } from "@/lib/mock-data"
+import { getLiveAccounts, getLivePositions } from "@/lib/supabase/data"
 
 export const metadata: Metadata = {
   title: "Positions",
 }
 
-export default function PositionsPage() {
-  const positions = getPositions()
-  const accounts = getAccounts()
-  const aggregate = getAggregatePnl()
+export default async function PositionsPage() {
+  const [positions, accounts] = await Promise.all([getLivePositions(), getLiveAccounts()])
+  const aggregate = positions.reduce((sum, position) => sum + position.pnl, 0)
   const winners = positions.filter((p) => p.pnl >= 0).length
   const losers = positions.length - winners
 

@@ -1,14 +1,13 @@
 import type { Metadata } from "next"
 import { TradesLogView } from "@/components/trades/trades-log-view"
-import { getTrades, getAccounts } from "@/lib/mock-data"
+import { getLiveTrades, getLiveAccounts } from "@/lib/supabase/data"
 
 export const metadata: Metadata = {
   title: "Order Log",
 }
 
-export default function TradesPage() {
-  const trades = getTrades()
-  const accounts = getAccounts()
+export default async function TradesPage() {
+  const [trades, accounts] = await Promise.all([getLiveTrades(), getLiveAccounts()])
 
   return (
     <div className="flex flex-col gap-6">

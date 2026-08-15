@@ -16,17 +16,15 @@ import { PnlValue } from "@/components/pnl-value"
 import { PnlAreaChart } from "@/components/pnl-area-chart"
 import { PositionsTable } from "@/components/positions-table"
 import { TradesTable } from "@/components/trades-table"
+import { formatINR, formatDate } from "@/lib/mock-data"
 import {
-  getAccount,
-  getPositionsByAccount,
-  getTradesByAccount,
-  getReportsByAccount,
-  getAccountPnl,
-  getAccountPnlHistory,
-  getSessionByAccount,
-  formatINR,
-  formatDate,
-} from "@/lib/mock-data"
+  getLiveAccount,
+  getLivePositions,
+  getLiveTrades,
+  getLiveReports,
+  getLiveSessions,
+  getLiveAccountPnlHistory,
+} from "@/lib/supabase/data"
 import { ReportsTable } from "@/components/reports/reports-table"
 
 export default async function AccountDetailPage({
@@ -35,15 +33,19 @@ export default async function AccountDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const account = getAccount(id)
+  const [accountResult, positions, trades, reports, sessions, history] = await Promise.all([
+    getLiveAccount(id).catch(() => null),
+    getLivePositions(id),
+    getLiveTrades(id),
+    getLiveReports(id),
+    getLiveSessions(),
+    getLiveAccountPnlHistory(id),
+  ])
+  const account = accountResult
   if (!account) notFound()
 
-  const positions = getPositionsByAccount(id)
-  const trades = getTradesByAccount(id)
-  const reports = getReportsByAccount(id)
-  const pnl = getAccountPnl(id)
-  const history = getAccountPnlHistory(id)
-  const session = getSessionByAccount(id)
+  const pnl = positions.reduce((sum, position) => sum + position.pnl, 0)
+  const session = sessions.find((item) => item.accountId === id)
 
   const invested = positions.reduce(
     (s, p) => s + p.avgPrice * p.quantity,
