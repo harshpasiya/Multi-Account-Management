@@ -16,12 +16,18 @@ export async function GET(
     return Response.json({ error: "Kite credentials were not found for this account." }, { status: 404 })
   }
 
-  const redirectUri = process.env.KITE_REDIRECT_URL || new URL("/api/kite/callback", request.url).toString()
+  // Kite Connect uses the redirect URL registered for this API key. It does
+  // not accept a dynamic redirect_uri query parameter.
+  const expectedRedirectUri =
+    process.env.KITE_REDIRECT_URL || new URL("/api/kite/callback", request.url).toString()
+  console.log(
+    "[v0] Initiating Kite login. Ensure the app's registered redirect URL on developers.kite.trade matches exactly:",
+    expectedRedirectUri,
+  )
 
   const url = new URL("https://kite.zerodha.com/connect/login")
   url.searchParams.set("v", "3")
   url.searchParams.set("api_key", data.api_key)
-  url.searchParams.set("redirect_uri", redirectUri)
   url.searchParams.set("state", accountId)
 
   return Response.redirect(url)
